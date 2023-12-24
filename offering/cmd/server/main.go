@@ -3,10 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	"log"
 	"offering/internal/app"
 	"offering/internal/config"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -19,8 +18,7 @@ func main() {
 
 	cfg, err := config.NewConfig(cfgPath)
 	if err != nil {
-		fmt.Println(fmt.Errorf("fatal: init config %v", err))
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	a := app.NewApp(cfg)
