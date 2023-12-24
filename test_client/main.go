@@ -8,16 +8,21 @@ import (
 	"net/http"
 )
 
+type Location struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
 type request struct {
-	FROM     string `json:"from"`
-	TO       string `json:"to"`
-	ClientID int    `json:"client_id"`
+	FROM     Location `json:"from"`
+	TO       Location `json:"to"`
+	ClientID int      `json:"client_id"`
 }
 
 func createOffer() {
 	var req = &request{
-		FROM:     "Sochi",
-		TO:       "sdjf",
+		FROM:     Location{0, 1},
+		TO:       Location{8.3823, 9.2},
 		ClientID: 1,
 	}
 

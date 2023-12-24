@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"offering/internal/manager"
+	"offering/internal/models"
 )
 
 type Controller struct {
@@ -23,26 +24,17 @@ func (c *Controller) ParseOffer(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println(offId)
 
-		payload, ok := manager.JwtPayloadFromRequest(offId, c.manager.Cfg.JWT)
+		payload, ok := c.manager.JwtPayloadFromRequest(offId, c.manager.Cfg.JWT)
 		if !ok {
 			fmt.Println("Bad token")
 		}
 
-		fmt.Println(payload)
-
-		ans := manager.Answer{}
-		ans.ID = offId
-		ans.TO = payload["to"].(string)
-		ans.FROM = payload["from"].(string)
-		ans.ClientID = int(payload["client_id"].(float64))
-		ans.Price = payload["price"].(float64)
-
-		resp, err := json.Marshal(ans)
-		if err != nil {
-			fmt.Println("Bad marshal")
+		orderJson, ok := payload["order"].(string)
+		if !ok {
+			fmt.Println("incorrect data in token")
 		}
 
-		w.Write(resp)
+		w.Write([]byte(orderJson))
 	}
 }
 
@@ -54,18 +46,24 @@ func (c *Controller) CreateOffer(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 
-		var req manager.CreateRequest
-		var respStruct manager.CreateResponse
-		err = json.Unmarshal(bytesBody, &req)
+		var respStruct models.Offer
+		err = json.Unmarshal(bytesBody, &respStruct)
 		if err != nil {
 			fmt.Println(err)
 		}
 
+		respStruct.Price.Amount = manager.GeneratePrice(respStruct.FROM, respStruct.TO)
+		respStruct.Price.Currency = "$"
+
+		fmt.Println(respStruct)
+
+		bytes, err := json.Marshal(respStruct)
+		if err != nil {
+			fmt.Println("a")
+		}
+
 		payload := jwt.MapClaims{
-			"from":      req.FROM,
-			"to":        req.TO,
-			"client_id": req.ClientID,
-			"price":     manager.GeneratePrice(req.FROM, req.TO),
+			"order": string(bytes),
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -76,20 +74,6 @@ func (c *Controller) CreateOffer(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Bad signing")
 		}
 
-		respStruct.ID = t
-		respStruct.FROM = req.FROM
-		respStruct.TO = req.TO
-		respStruct.ClientID = req.ClientID
-		respStruct.Price = manager.GeneratePrice(req.FROM, req.TO)
-
-		response, err := json.Marshal(respStruct)
-
-		fmt.Println(response)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		w.Write(response)
+		w.Write([]byte(t))
 	}
 }
