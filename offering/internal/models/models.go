@@ -16,3 +16,8 @@ type Offer struct {
 	ClientID int      `json:"client_id"`
 	Price    Price    `json:"price"`
 }
+
+type Answer struct {
+	ID    string `json:"id"`
+	Order Offer  `json:"order"`
+}

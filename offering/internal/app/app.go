@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -18,14 +19,18 @@ type App struct {
 }
 
 func initServer(cfg *config.Config, logger *zap.Logger) http.Handler {
-	serverMux := http.NewServeMux()
+	//serverMux := http.NewServeMux()
 
 	handler := handlers.NewController(manager.NewManager(cfg, logger), logger)
 
-	serverMux.HandleFunc("/parseOffer", handler.ParseOffer)
-	serverMux.HandleFunc("/createOffer", handler.CreateOffer)
+	router := chi.NewRouter()
+	router.Post("/offers", handler.CreateOffer)
+	router.Get("/offers/{offerID}", handler.ParseOffer)
 
-	return serverMux
+	//serverMux.HandleFunc("/parseOffer", handler.ParseOffer)
+	//serverMux.HandleFunc("/createOffer", handler.CreateOffer)
+
+	return router
 }
 
 func NewApp(cfg *config.Config) *App {
@@ -36,7 +41,7 @@ func NewApp(cfg *config.Config) *App {
 	}
 
 	newServer := &http.Server{
-		Addr:    ":" + cfg.Port,
+		Addr:    cfg.IP + ":" + cfg.Port,
 		Handler: initServer(cfg, logger),
 	}
 
