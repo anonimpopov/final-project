@@ -4,27 +4,35 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"offering/internal/config"
+	"offering/internal/handlers"
+	"offering/internal/manager"
 )
 
 type App struct {
+	cfg    *config.Config
 	server *http.Server
 }
 
-func initServer() http.Handler {
+func initServer(cfg *config.Config) http.Handler {
 	serverMux := http.NewServeMux()
 
-	//TODO handlers
+	handler := handlers.NewController(manager.NewManager(cfg))
+
+	serverMux.HandleFunc("/parseOffer", handler.ParseOffer)
+	serverMux.HandleFunc("/createOffer", handler.CreateOffer)
 
 	return serverMux
 }
 
-func NewApp(address string) *App {
+func NewApp(cfg *config.Config) *App {
 	newServer := &http.Server{
-		Addr:    address,
-		Handler: initServer(),
+		Addr:    ":" + cfg.Port,
+		Handler: initServer(cfg),
 	}
 
 	return &App{
+		cfg:    cfg,
 		server: newServer,
 	}
 }
